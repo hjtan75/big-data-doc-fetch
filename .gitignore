@@ -4,3 +4,15 @@ bin
 .settings
 .classpath
 Notes.docx
+
+*.pydevproject
+.project
+.metadata
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
