@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public class DocumentRanking implements Serializable{
-
+	// Store a list of ranked results
 	private static final long serialVersionUID = 2675653150567946299L;
 	
 	Query query;
