@@ -4,7 +4,7 @@ bin
 .settings
 .classpath
 Notes.docx
-
+.idea/
 *.pydevproject
 .project
 .metadata
