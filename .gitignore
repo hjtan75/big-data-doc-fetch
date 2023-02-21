@@ -4,7 +4,8 @@ bin
 .settings
 .classpath
 Notes.docx
-
+.idea/
+BigData-AE.iml
 *.pydevproject
 .project
 .metadata
@@ -16,3 +17,4 @@ tmp/**/*
 *~.nib
 local.properties
 .loadpath
+pom.xml
