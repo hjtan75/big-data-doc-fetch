@@ -4,7 +4,8 @@ bin
 .settings
 .classpath
 Notes.docx
-
+.idea/
+BigData-AE.iml
 *.pydevproject
 .project
 .metadata

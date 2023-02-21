@@ -3,7 +3,7 @@ package uk.ac.gla.dcs.bigdata.providedstructures;
 import java.io.Serializable;
 
 public class RankedResult implements Serializable, Comparable<RankedResult> {
-
+	// Store a single document with it's corresponding score
 	private static final long serialVersionUID = -2905684103776472843L;
 	
 	String docid;
