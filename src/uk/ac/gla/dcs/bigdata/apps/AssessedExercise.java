@@ -3,16 +3,15 @@ package uk.ac.gla.dcs.bigdata.apps;
 import java.io.File;
 import java.util.List;
 import org.apache.spark.SparkConf;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.PreprocessFilters;
+import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -98,7 +97,12 @@ public class AssessedExercise {
 		//----------------------------------------------------------------
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
-		
+		//1. remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
+		// (which converts each word into its ‘stem’, a shorter version that helps with term mismatch between documents and queries).
+		Encoder<ArticleWords> newsArticleEncoder = Encoders.bean(ArticleWords.class);
+		Dataset<ArticleWords> articleWordsDataSet = news.map(new PreprocessFilters(), newsArticleEncoder);
+		var s = articleWordsDataSet.collectAsList();
+		System.out.println(s.get(0).getWords());
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

@@ -5,7 +5,10 @@ bin
 .classpath
 Notes.docx
 .idea/
+<<<<<<< HEAD
 BigData-AE.iml
+=======
+>>>>>>> Yinsong
 *.pydevproject
 .project
 .metadata
