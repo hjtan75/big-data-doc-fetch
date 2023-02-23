@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.studentfunctions;
+package uk.ac.gla.dcs.bigdata.studentfunctions.map;
 
 import org.apache.spark.api.java.function.MapFunction;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
@@ -7,13 +7,16 @@ import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
 
 import java.util.ArrayList;
 
-public class PreprocessFilters implements MapFunction<NewsArticle, ArticleWords> {
+public class PreprocessMap implements MapFunction<NewsArticle, ArticleWords> {
 
     private static final long serialVersionUID = 1938637539215783780L;
     private transient TextPreProcessor processor;
 
     @Override
     public ArticleWords call(NewsArticle newsArticle) throws Exception {
+        if (newsArticle.getTitle() == null || newsArticle.getId() == null){
+            return null;
+        }
         if (processor==null) processor = new TextPreProcessor();
         var list = new ArrayList<String>();
         if (newsArticle.getTitle() != null){

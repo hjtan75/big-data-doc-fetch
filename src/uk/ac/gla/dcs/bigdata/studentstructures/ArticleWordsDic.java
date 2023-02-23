@@ -1,25 +1,27 @@
 package uk.ac.gla.dcs.bigdata.studentstructures;
 
-import java.io.Serializable;
-import java.util.List;
+import java.util.HashMap;
 
-public class ArticleWords implements Serializable {
+public class ArticleWordsDic {
 
+    private static final long serialVersionUID = 2156752235402082267L;
 
-    private static final long serialVersionUID = 2156752235108082267L;
     String id; // unique article identifier
+
     String title; // article title
 
     int length;
 
-    List<String> words;
+    HashMap<String, Integer> mapping;
 
-    public ArticleWords(){}
+    public ArticleWordsDic() {
+    }
 
-    public ArticleWords(String id, String title, List<String> words) {
+    public ArticleWordsDic(String id, String title, int length) {
         this.id = id;
         this.title = title;
-        this.words = words;
+        this.length = length;
+        this.mapping = new HashMap<>();
     }
 
     public String getId() {
@@ -38,19 +40,19 @@ public class ArticleWords implements Serializable {
         this.title = title;
     }
 
-    public List<String> getWords() {
-        return words;
-    }
-
-    public void setWords(List<String> words) {
-        this.words = words;
-    }
-
     public int getLength() {
         return length;
     }
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    public HashMap<String, Integer> getMapping() {
+        return mapping;
+    }
+
+    public void setMapping(HashMap<String, Integer> mapping) {
+        this.mapping = mapping;
     }
 }
