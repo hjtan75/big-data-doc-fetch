@@ -3,6 +3,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.spark.SparkConf;
@@ -19,8 +20,9 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.filter.FilterArticleWithQueryFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetWordsFlatMap;
-import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.PreprocessFlatMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.filter.PreprocessFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.QueryWordsFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.WordsToDicMap;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
@@ -155,9 +157,9 @@ public class AssessedExercise {
 		Dataset<String> Words = articleWordsDataSet.flatMap(new GetWordsFlatMap(), Encoders.STRING());
 		System.out.println("Words Count " + Words.count());
 
-		var totalCorpusLength = Words.count();
-		var totalDocsInCorpus = articleWordsDataSet.count();
-		var averageDocumentLengthInCorpus = totalCorpusLength / totalDocsInCorpus;
+		long totalCorpusLength = Words.count();
+		long totalDocsInCorpus = articleWordsDataSet.count();
+		double averageDocumentLengthInCorpus = totalCorpusLength / totalDocsInCorpus;
 		JavaPairRDD<String,Integer> articlePairs=Words.toJavaRDD().mapToPair(new PairFunction<String,String,Integer>(){
 			@Override
 			public Tuple2<String, Integer> call(String word) throws Exception {
@@ -170,7 +172,7 @@ public class AssessedExercise {
 				return v1+v2;
 			}
 		});
-		var totalTermFrequencyInCorpus = articleWordCount.collectAsMap();
+		Map<String, Integer> totalTermFrequencyInCorpus = articleWordCount.collectAsMap();
 //		for(Map.Entry<String, Integer> entry : totalTermFrequencyInCorpus.entrySet()) {
 //			String key = entry.getKey();
 //			Integer value = entry.getValue();
@@ -180,11 +182,14 @@ public class AssessedExercise {
 		Broadcast<Set<String>> broadcastQueryWords = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryWordSet);
 		Encoder<ArticleWordsDic> articleWordsDicEncoder = Encoders.bean(ArticleWordsDic.class);
 		Dataset<ArticleWordsDic> articleWordsDicDataSet = articleWordsDataSet.map(new WordsToDicMap(broadcastQueryWords), articleWordsDicEncoder);
+		Dataset<ArticleWordsDic> articleWordsDicAfterFilter = articleWordsDicDataSet.flatMap(new FilterArticleWithQueryFlatMap(), articleWordsDicEncoder);
 		System.out.println("Article Words Dic " + articleWordsDicDataSet.count());
-
-
+		System.out.println("Article Words Dic after Filter " + articleWordsDicAfterFilter.count());
+		//List<ArticleWordsDic> articleWordsDicList = articleWordsDicDataSet.collectAsList();
+		List<ArticleWordsDic> articleWordsDicList = articleWordsDicAfterFilter.collectAsList();
 
 		// 3 calculate the query
+
 
 
 		return null; // replace this with the the list of DocumentRanking output by your topology

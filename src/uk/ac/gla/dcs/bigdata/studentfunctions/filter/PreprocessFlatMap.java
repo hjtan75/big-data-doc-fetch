@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.studentfunctions.flatmap;
+package uk.ac.gla.dcs.bigdata.studentfunctions.filter;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
