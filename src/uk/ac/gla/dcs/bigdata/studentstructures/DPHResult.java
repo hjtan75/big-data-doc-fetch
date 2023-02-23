@@ -8,6 +8,8 @@ public class DPHResult implements Serializable {
 
     String id;
 
+    String title;
+
     double score;
 
     public DPHResult() {
@@ -17,8 +19,9 @@ public class DPHResult implements Serializable {
         this.id = id;
     }
 
-    public DPHResult(String id, double score) {
+    public DPHResult(String id, String title, double score) {
         this.id = id;
+        this.title = title;
         this.score = score;
     }
 
@@ -38,4 +41,11 @@ public class DPHResult implements Serializable {
         this.score = score;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }
