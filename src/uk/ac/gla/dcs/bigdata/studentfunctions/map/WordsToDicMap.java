@@ -6,6 +6,7 @@ import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWordsDic;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class WordsToDicMap implements MapFunction<ArticleWords, ArticleWordsDic> {
@@ -20,9 +21,9 @@ public class WordsToDicMap implements MapFunction<ArticleWords, ArticleWordsDic>
 
     @Override
     public ArticleWordsDic call(ArticleWords articleWords) throws Exception {
-        ArticleWordsDic articleWordsDic = new ArticleWordsDic(articleWords.getId(), articleWords.getTitle(), articleWords.getLength());
+        ArticleWordsDic articleWordsDic = new ArticleWordsDic(articleWords.getId(), articleWords.getTitle(), articleWords.getLength(), new HashMap<String, Integer>());
         Set<String> queryWords = broadcastQueryWords.value();
-        HashMap<String, Integer> mapping = articleWordsDic.getMapping();
+        Map<String, Integer> mapping = articleWordsDic.getMap();
         for (String s : articleWords.getWords()){
             if (queryWords.contains(s)){
                 if (mapping.containsKey(s)){

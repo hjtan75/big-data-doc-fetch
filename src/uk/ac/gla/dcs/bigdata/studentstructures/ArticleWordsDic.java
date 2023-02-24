@@ -1,7 +1,10 @@
 package uk.ac.gla.dcs.bigdata.studentstructures;
 
+import it.unimi.dsi.fastutil.Hash;
+
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ArticleWordsDic implements Serializable {
 
@@ -13,18 +16,17 @@ public class ArticleWordsDic implements Serializable {
 
     int length;
 
-    HashMap<String, Integer> map;
+    Map<String, Integer> map;
 
     public ArticleWordsDic() {
     }
 
-    public ArticleWordsDic(String id, String title, int length) {
+    public ArticleWordsDic(String id, String title, int length, Map<String, Integer> map) {
         this.id = id;
         this.title = title;
         this.length = length;
-        this.map = new HashMap<>();
+        this.map = map;
     }
-
     public String getId() {
         return id;
     }
@@ -49,8 +51,11 @@ public class ArticleWordsDic implements Serializable {
         this.length = length;
     }
 
-    public HashMap<String, Integer> getMapping() {
+    public Map<String, Integer> getMap() {
         return map;
     }
 
+    public void setMap(Map<String, Integer> map) {
+        this.map = map;
+    }
 }

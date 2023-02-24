@@ -6,7 +6,9 @@ import java.util.*;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
@@ -151,13 +153,39 @@ public class AssessedExercise {
 		// add the <word, time> map into articleWordsDicDataSet
 		Encoder<ArticleWordsDic> articleWordsDicEncoder = Encoders.bean(ArticleWordsDic.class);
 		Dataset<ArticleWordsDic> articleWordsDicDataSet = articleWordsDataSet.map(new WordsToDicMap(broadcastQueryWords), articleWordsDicEncoder);
+		System.out.println("Article Words Dic " + articleWordsDicDataSet.count());
 		// filter the article doesn't have any query term
 		Dataset<ArticleWordsDic> articleWordsDicAfterFilter = articleWordsDicDataSet.flatMap(new FilterArticleWithQueryFlatMap(), articleWordsDicEncoder);
-		System.out.println("Article Words Dic " + articleWordsDicDataSet.count());
-		System.out.println("Article Words Dic after Filter " + articleWordsDicAfterFilter.count());
+//		Dataset<ArticleWordsDic> articleWordsDicAfterFilter = articleWordsDicDataSet.filter(new FilterFunction<ArticleWordsDic>() {
+//			@Override
+//			public boolean call(ArticleWordsDic articleWordsDic) throws Exception {
+//				var mapping = articleWordsDic.getMap();
+//				if (mapping == null || mapping.size() == 0){
+//					List<ArticleWordsDic> articleWordsDicList  = new ArrayList<>(0);
+//					return false;
+//				}
+//				return true;
+//			}
+//		});
 		List<ArticleWordsDic> articleWordsDicList = articleWordsDicAfterFilter.collectAsList();
 
+		for (var a : articleWordsDicList){
+			if (a.getMap() == null){
+				System.out.println("In main thread mapping null " + a.getId());
+			}else{
+				System.out.println("In main thread mapping " + a.getId() + " " + a.getMap().size());
+			}
+		}
 
+
+		System.out.println("Article Words Dic after Filter " + articleWordsDicAfterFilter.count());
+
+
+//		try {
+//			Thread.sleep(1000000);
+//		} catch (InterruptedException e) {
+//			throw new RuntimeException(e);
+//		}
 		// 3 calculate the query
 		JavaPairRDD<String, NewsArticle> newsArticleMapRDD = news.toJavaRDD().mapToPair(new PairFunction<NewsArticle,String,NewsArticle>(){
 			@Override
@@ -165,8 +193,11 @@ public class AssessedExercise {
 				return new Tuple2<String, NewsArticle>(newsArticle.getId(), newsArticle);
 			}
 		});
+
 		Broadcast<Map<String, NewsArticle>> newsArticleMapBroadcast =  JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(newsArticleMapRDD.collectAsMap());
 
+		System.out.println("totalDocsInCorpus: " + totalDocsInCorpus);
+		System.out.println("averageDocumentLengthInCorpus: " + averageDocumentLengthInCorpus);
 		Broadcast<Long> totalDocsInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalDocsInCorpus);
 		Broadcast<Double> averageDocumentLengthInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(averageDocumentLengthInCorpus);
 		Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalTermFrequencyInCorpus);

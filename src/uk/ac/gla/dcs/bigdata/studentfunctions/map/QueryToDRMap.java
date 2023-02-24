@@ -47,11 +47,12 @@ public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
         //1. get the score of articles
         for (ArticleWordsDic articleWordsDic : articleWordsList){
             double currentScore = 0;
-            HashMap<String, Integer> mapping = articleWordsDic.getMapping();
+            Map<String, Integer> mapping = articleWordsDic.getMap();
             for (String term : query.getQueryTerms()){
                 int currTotalTermFrequencyInCorpus = totalTermFrequencyInCorpusDic.containsKey(term) ? totalTermFrequencyInCorpusDic.get(term) : 0;
-                if (!mapping.containsKey(term)){
-                    currentScore += DPHScorer.getDPHScore((short)0, currTotalTermFrequencyInCorpus, articleWordsDic.getLength(), averageDocumentLengthInCorpus, totalDocsInCorpus);
+                if (mapping.containsKey(term)){
+                    System.out.println("termFrequencyInCurrentDocument " + mapping.get(term) + " currTotalTermFrequencyInCorpus: " + currTotalTermFrequencyInCorpus + " currentDocLength: " + articleWordsDic.getLength());
+                    currentScore += DPHScorer.getDPHScore(mapping.get(term).shortValue(), currTotalTermFrequencyInCorpus, articleWordsDic.getLength(), averageDocumentLengthInCorpus, totalDocsInCorpus);
                 }
             }
             currentScore = currentScore / query.getQueryTerms().size();
@@ -62,6 +63,9 @@ public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
         Collections.sort(dphResultList, new Comparator<DPHResult>() {
             @Override
             public int compare(DPHResult d1, DPHResult d2) {
+                if (d1.getScore() == d2.getScore()){
+                    return 0;
+                }
                 return d1.getScore() > d2.getScore() ? -1 : 1;
             }
         });
