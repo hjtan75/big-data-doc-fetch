@@ -10,10 +10,11 @@ import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWordsDic;
 import uk.ac.gla.dcs.bigdata.studentstructures.DPHResult;
+import uk.ac.gla.dcs.bigdata.studentstructures.QueryResultWithArticleId;
 
 import java.util.*;
 
-public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
+public class QueryToDRMap implements MapFunction<Query, QueryResultWithArticleId> {
 
     private static final long serialVersionUID = -484410270146328326L;
 
@@ -21,25 +22,22 @@ public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
     Broadcast<Long> totalDocsInCorpus;
     Broadcast<Double> averageDocumentLengthInCorpus;
     Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic;
-    Broadcast<Map<String, NewsArticle>> newsArticleMapBroadcast;
 
     public QueryToDRMap(Broadcast<List<ArticleWordsDic>> listBroadcast, Broadcast<Long> totalDocsInCorpus,
                         Broadcast<Double> averageDocumentLengthInCorpus,
-                        Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic, Broadcast<Map<String, NewsArticle>> newsArticleMapBroadcast) {
+                        Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic) {
         this.listBroadcast = listBroadcast;
         this.totalDocsInCorpus = totalDocsInCorpus;
         this.averageDocumentLengthInCorpus = averageDocumentLengthInCorpus;
         this.totalTermFrequencyInCorpusDic = totalTermFrequencyInCorpusDic;
-        this.newsArticleMapBroadcast = newsArticleMapBroadcast;
     }
 
     @Override
-    public DocumentRanking call(Query query) throws Exception {
+    public QueryResultWithArticleId call(Query query) throws Exception {
         List<ArticleWordsDic> articleWordsList = listBroadcast.value();
         Long totalDocsInCorpus = this.totalDocsInCorpus.value();
         Double averageDocumentLengthInCorpus = this.averageDocumentLengthInCorpus.value();
         Map<String, Integer> totalTermFrequencyInCorpusDic = this.totalTermFrequencyInCorpusDic.value();
-        Map<String, NewsArticle> newsArticleMap = this.newsArticleMapBroadcast.value();
 
         List<DPHResult> dphResultList = new ArrayList<>();
 
@@ -51,7 +49,7 @@ public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
             for (String term : query.getQueryTerms()){
                 int currTotalTermFrequencyInCorpus = totalTermFrequencyInCorpusDic.containsKey(term) ? totalTermFrequencyInCorpusDic.get(term) : 0;
                 if (mapping.containsKey(term)){
-                    System.out.println("termFrequencyInCurrentDocument " + mapping.get(term) + " currTotalTermFrequencyInCorpus: " + currTotalTermFrequencyInCorpus + " currentDocLength: " + articleWordsDic.getLength());
+                    //System.out.println("termFrequencyInCurrentDocument " + mapping.get(term) + " currTotalTermFrequencyInCorpus: " + currTotalTermFrequencyInCorpus + " currentDocLength: " + articleWordsDic.getLength());
                     currentScore += DPHScorer.getDPHScore(mapping.get(term).shortValue(), currTotalTermFrequencyInCorpus, articleWordsDic.getLength(), averageDocumentLengthInCorpus, totalDocsInCorpus);
                 }
             }
@@ -69,23 +67,23 @@ public class QueryToDRMap implements MapFunction<Query, DocumentRanking> {
                 return d1.getScore() > d2.getScore() ? -1 : 1;
             }
         });
-        //3. calculate distance and generate List<RankedResult>
-        List<RankedResult> rankedResultList= new ArrayList<>();
-        for (int i = 0; i < dphResultList.size() && rankedResultList.size() <= 10; i++) {
+
+
+        //3. calculate distance and generate inter query
+        QueryResultWithArticleId queryResultWithArticleId = new QueryResultWithArticleId(query, new ArrayList<>());
+        List<DPHResult> list = queryResultWithArticleId.getArticleIdList();
+        for (int i = 0; i < dphResultList.size() && list.size() < 10; i++) {
             var curr = dphResultList.get(i);
-            if (rankedResultList.size() == 0){
-                var randedResult = new RankedResult(curr.getId(), newsArticleMap.get(curr.getId()),curr.getScore());
-                rankedResultList.add(randedResult);
+            if (list.size() == 0){
+                list.add(curr);
                 continue;
             }
-            double score = TextDistanceCalculator.similarity(
-                    dphResultList.get(dphResultList.size() - 1).getTitle(), dphResultList.get(i+1).getTitle());
+            double score = TextDistanceCalculator.similarity(list.get(list.size() - 1).getTitle(), curr.getTitle());
             if (score >= 0.5){
-                var randedResult = new RankedResult(curr.getId(), newsArticleMap.get(curr.getId()),curr.getScore());
-                rankedResultList.add(randedResult);
+                list.add(dphResultList.get(i));
             }
         }
 
-        return new DocumentRanking(query, rankedResultList);
+        return queryResultWithArticleId;
     }
 }
