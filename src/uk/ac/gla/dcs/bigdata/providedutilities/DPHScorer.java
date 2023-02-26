@@ -13,7 +13,10 @@ import org.terrier.matching.models.WeightingModelLibrary;
  *
  */
 public class DPHScorer {
-	
+
+	public DPHScorer(String id, double currentScore) {
+	}
+
 	/**
 	 * Calculates the DPH score for a single query term in a document
 	 * @param termFrequencyInCurrentDocument // The number of times the query appears in the document

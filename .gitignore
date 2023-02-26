@@ -5,15 +5,13 @@ bin
 .classpath
 Notes.docx
 .idea/
-<<<<<<< HEAD
 BigData-AE.iml
-=======
->>>>>>> Yinsong
 *.pydevproject
 .project
 .metadata
 tmp/**
 tmp/**/*
+results
 *.tmp
 *.bak
 *.swp
@@ -21,3 +19,4 @@ tmp/**/*
 local.properties
 .loadpath
 pom.xml
+.DS_Store
