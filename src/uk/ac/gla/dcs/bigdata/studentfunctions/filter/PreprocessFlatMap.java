@@ -32,15 +32,22 @@ public class PreprocessFlatMap implements FlatMapFunction<NewsArticle, ArticleWo
 
     @Override
     public Iterator<ArticleWordsDic> call(NewsArticle newsArticle) throws Exception {
+        // Ignore articles that doesn't contain title or ID
         if (newsArticle.getTitle() == null || newsArticle.getId() == null){
             List<ArticleWordsDic> articleWordsDicList  = new ArrayList<ArticleWordsDic>(0);
             return articleWordsDicList.iterator();
         }
+
+        // Create a list to store processed terms
+        // Process title of article and append it to list
         if (processor==null) processor = new TextPreProcessor();
         ArrayList<String> list = new ArrayList<String>();
         if (newsArticle.getTitle() != null){
             list.addAll(processor.process(newsArticle.getTitle()));
         }
+
+        // Process contentItem that has subtype equals to "paragraph"
+        //
         int number = 0;
         Iterator<ContentItem> iterator = newsArticle.getContents().iterator();
         while(iterator.hasNext() && number < 5){

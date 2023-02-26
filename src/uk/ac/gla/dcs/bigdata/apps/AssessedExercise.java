@@ -119,10 +119,10 @@ public class AssessedExercise {
 
 		// Step 1. Preprocessing
 		// NewsArticle → ArticleWordsDic
-        // 1.1 get the query word map and create broadcast
+        // 1.1 Get the query word map and create broadcast
         Set<String> queryWordSet = getQueryWordsSet(queries);
         Broadcast<Set<String>> broadcastQueryWords = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryWordSet);
-        // 1.2 change news -> ArticleWordsDic, remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
+        // 1.2 Change news -> ArticleWordsDic, remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
 		LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
 		LongAccumulator docCountAccumulator = spark.sparkContext().longAccumulator();
 		TotalQueryWordsAccumulator totalQueryWordsAccumulator = new TotalQueryWordsAccumulator();

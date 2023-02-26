@@ -16,6 +16,7 @@
     <groupId>org.apache.spark</groupId>
     <artifactId>spark-core_2.13</artifactId>
     <version>3.2.0</version>
+    <scope>provided</scope>
 </dependency>
   
   <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming -->
@@ -23,12 +24,14 @@
     <groupId>org.apache.spark</groupId>
     <artifactId>spark-streaming_2.13</artifactId>
     <version>3.2.0</version>
+    <scope>provided</scope>
 </dependency>
 
 <dependency>
     <groupId>org.apache.spark</groupId>
     <artifactId>spark-sql_2.13</artifactId>
     <version>3.2.0</version>
+    <scope>provided</scope>
 </dependency>
 
 
