@@ -2,10 +2,7 @@ package uk.ac.gla.dcs.bigdata.studentfunctions.map;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
-import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWordsDic;
@@ -14,7 +11,7 @@ import uk.ac.gla.dcs.bigdata.studentstructures.QueryResultWithArticleId;
 
 import java.util.*;
 
-public class QueryToDRMap implements MapFunction<Query, QueryResultWithArticleId> {
+public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWithArticleId> {
 
     private static final long serialVersionUID = -484410270146328326L;
 
@@ -23,9 +20,9 @@ public class QueryToDRMap implements MapFunction<Query, QueryResultWithArticleId
     Broadcast<Double> averageDocumentLengthInCorpus;
     Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic;
 
-    public QueryToDRMap(Broadcast<List<ArticleWordsDic>> listBroadcast, Broadcast<Long> totalDocsInCorpus,
-                        Broadcast<Double> averageDocumentLengthInCorpus,
-                        Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic) {
+    public QueryToQueryResultMap(Broadcast<List<ArticleWordsDic>> listBroadcast, Broadcast<Long> totalDocsInCorpus,
+                                 Broadcast<Double> averageDocumentLengthInCorpus,
+                                 Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusDic) {
         this.listBroadcast = listBroadcast;
         this.totalDocsInCorpus = totalDocsInCorpus;
         this.averageDocumentLengthInCorpus = averageDocumentLengthInCorpus;

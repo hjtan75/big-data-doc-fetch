@@ -1,7 +1,6 @@
 package uk.ac.gla.dcs.bigdata.studentfunctions.filter;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWordsDic;
 
 import java.util.ArrayList;

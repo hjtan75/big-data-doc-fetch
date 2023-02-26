@@ -12,22 +12,18 @@ import org.apache.spark.sql.*;
 
 import org.apache.spark.util.LongAccumulator;
 import scala.Tuple2;
-import scala.reflect.internal.Trees;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.studentfunctions.filter.FilterArticleWithQueryFlatMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.TotalQueryWordsAccumulator;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetReusltArticleIdFlatMap;
-import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetWordsFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.filter.PreprocessFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.NewsArticleResultFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.QueryWordsFlatMap;
-import uk.ac.gla.dcs.bigdata.studentfunctions.map.QueryToDRMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.QueryToQueryResultMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.QueryWithArticleIdToDR;
-import uk.ac.gla.dcs.bigdata.studentfunctions.map.WordsToDicMap;
-import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWords;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleWordsDic;
 import uk.ac.gla.dcs.bigdata.studentstructures.QueryResultWithArticleId;
 
@@ -78,7 +74,12 @@ public class AssessedExercise {
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
-		
+		try {
+			Thread.sleep(1000000);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+
 		// Close the spark session
 		spark.close();
 		
@@ -97,8 +98,6 @@ public class AssessedExercise {
 				rankingForQuery.write(outDirectory.getAbsolutePath());
 			}
 		}
-		
-		
 	}
 	
 	
@@ -117,67 +116,56 @@ public class AssessedExercise {
 		//----------------------------------------------------------------
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
-		//1. remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
-		// (which converts each word into its ‘stem’, a shorter version that helps with term mismatch between documents and queries).
 
+		// Step 1. Preprocessing
+		// NewsArticle → ArticleWordsDic
+        // 1.1 get the query word map and create broadcast
+        Set<String> queryWordSet = getQueryWordsSet(queries);
+        Broadcast<Set<String>> broadcastQueryWords = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryWordSet);
+        // 1.2 change news -> ArticleWordsDic, remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
 		LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
 		LongAccumulator docCountAccumulator = spark.sparkContext().longAccumulator();
+		TotalQueryWordsAccumulator totalQueryWordsAccumulator = new TotalQueryWordsAccumulator();
+		spark.sparkContext().register(totalQueryWordsAccumulator);
 
-		Encoder<ArticleWords> articleWordsEncoder = Encoders.bean(ArticleWords.class);
-		Dataset<ArticleWords> articleWordsDataSet = news.flatMap(new PreprocessFlatMap(wordCountAccumulator, docCountAccumulator), articleWordsEncoder);
+		Dataset<ArticleWordsDic> articleWordsDicDataset = news.flatMap(new PreprocessFlatMap(wordCountAccumulator, docCountAccumulator, totalQueryWordsAccumulator, broadcastQueryWords), Encoders.bean(ArticleWordsDic.class));
 
-
-		// 2. calculate DPH parameter
-		// 2.1 get the query word map
-		Set<String> queryWordSet = getQueryWordsSet(queries);
-
-		// 2.2 totalTermFrequencyInCorpus map
-		Dataset<String> Words = articleWordsDataSet.flatMap(new GetWordsFlatMap(), Encoders.STRING());
-		JavaPairRDD<String,Integer> articlePairs=Words.toJavaRDD().mapToPair(new PairFunction<String,String,Integer>(){
-			@Override
-			public Tuple2<String, Integer> call(String word) throws Exception {
-				return new Tuple2<String,Integer>(word,1);
-			}
-		});
-		JavaPairRDD<String,Integer> articleWordCount = articlePairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
-			@Override
-			public Integer call(Integer v1, Integer v2) throws Exception {
-				return v1+v2;
-			}
-		});
-		Map<String, Integer> totalTermFrequencyInCorpus = articleWordCount.collectAsMap();
-
+		// get totalTermFrequencyInCorpus map, totalDocsInCorpus, averageDocumentLengthInCorpus
+		List<ArticleWordsDic> articleWordsDicList = articleWordsDicDataset.collectAsList();
 		long totalCorpusLength = wordCountAccumulator.value();
 		long totalDocsInCorpus = docCountAccumulator.value();
 		double averageDocumentLengthInCorpus = totalCorpusLength / totalDocsInCorpus;
-
-
-		// 2.3 create word map for each article
-		Broadcast<Set<String>> broadcastQueryWords = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryWordSet);
-		// add the <word, time> map into articleWordsDicDataSet
-		Encoder<ArticleWordsDic> articleWordsDicEncoder = Encoders.bean(ArticleWordsDic.class);
-		Dataset<ArticleWordsDic> articleWordsDicDataSet = articleWordsDataSet.map(new WordsToDicMap(broadcastQueryWords), articleWordsDicEncoder);
-		// filter the article doesn't have any query term
-		Dataset<ArticleWordsDic> articleWordsDicAfterFilter = articleWordsDicDataSet.flatMap(new FilterArticleWithQueryFlatMap(), articleWordsDicEncoder);
-		List<ArticleWordsDic> articleWordsDicList = articleWordsDicAfterFilter.collectAsList();
-		//get totalTermFrequencyInCorpus map, totalDocsInCorpus, averageDocumentLengthInCorpus
-
-
-		// 3 calculate the query
+		Map<String, Integer> totalTermFrequencyInCorpus = totalQueryWordsAccumulator.value();
 
 		System.out.println("totalDocsInCorpus: " + totalDocsInCorpus);
 		System.out.println("totalCorpusLength: " + totalCorpusLength);
 		System.out.println("averageDocumentLengthInCorpus: " + averageDocumentLengthInCorpus);
+
+		// Step 2. calculate the query
+		// ArticleWordsDic → QueryResultWithArticleId
+		//  1. Wrap the DPH parameter and the List<ArticleWordsDic> into Broadcast variables.
+		//  2. Based on the queries dataset, call `QueryToQueryResultMap` method to get the `QueryResultWithArticleId`.
+		//    1. Get the score of each article, store the articleID and score into `List<DPHResult> dphResultList`
+		//    2. Sort the `dphResultList`.
+		//    3. Calculate the distance between titles, and create 10 article list, storing at `queryResultWithArticleId`.
+		//    4. Return the `queryResultWithArticleId`.
 		Broadcast<Long> totalDocsInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalDocsInCorpus);
 		Broadcast<Double> averageDocumentLengthInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(averageDocumentLengthInCorpus);
 		Broadcast<Map<String, Integer>> totalTermFrequencyInCorpusBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalTermFrequencyInCorpus);
 		Broadcast<List<ArticleWordsDic>> articleWordsDicListBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(articleWordsDicList);
 
 
-		Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset = queries.map(new QueryToDRMap(articleWordsDicListBroadcast,
+		Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset = queries.map(new QueryToQueryResultMap(articleWordsDicListBroadcast,
 				totalDocsInCorpusBroadcast, averageDocumentLengthInCorpusBroadcast,
 				totalTermFrequencyInCorpusBroadcast), Encoders.bean(QueryResultWithArticleId.class));
 
+
+		// Step 3. Generate DocumentRanking
+		// QueryResultWithArticleId → DocumentRanking
+		//  1. In `Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset`, there are all the ArticleID needed for the result, then using `GetReusltArticleIdFlatMap()` to generate the unique ArticleID as HashSet,
+		//     use it on `NewsArticleResultFlatMap` of news dataset to get the Dataset<NewsArticle> needed for create DocumentRanking.
+		//  2. After getting Dataset<NewsArticle>, map it to `JavaPairRDD<String, NewsArticle>`, the key is the ArticleId, collect as Map.
+		//  3. Then broadcast it to the previous `queryResultWithArticleIdDataset`, using `QueryWithArticleIdToDR` Map to get the final `List<DocumentRanking> documentRankingList`.
 		Dataset<String> queryResultWithArticleIdList  = queryResultWithArticleIdDataset.flatMap(new GetReusltArticleIdFlatMap(), Encoders.STRING()).distinct();
 		HashSet<String> resultArticleIdSet = new HashSet<>(queryResultWithArticleIdList.collectAsList());
 		Broadcast<HashSet<String>> resultArticleIdSetBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(resultArticleIdSet);
