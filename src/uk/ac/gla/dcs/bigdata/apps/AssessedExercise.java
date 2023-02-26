@@ -74,11 +74,6 @@ public class AssessedExercise {
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
-		try {
-			Thread.sleep(1000000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
 
 		// Close the spark session
 		spark.close();
