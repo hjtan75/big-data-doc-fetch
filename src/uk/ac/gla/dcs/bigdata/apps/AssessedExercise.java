@@ -74,6 +74,11 @@ public class AssessedExercise {
 		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
+//		try {
+//			Thread.sleep(1000000);
+//		} catch (InterruptedException e) {
+//			throw new RuntimeException(e);
+//		}
 
 		// Close the spark session
 		spark.close();
@@ -132,9 +137,15 @@ public class AssessedExercise {
 		double averageDocumentLengthInCorpus = totalCorpusLength / totalDocsInCorpus;
 		Map<String, Integer> totalTermFrequencyInCorpus = totalQueryWordsAccumulator.value();
 
-		System.out.println("totalDocsInCorpus: " + totalDocsInCorpus);
-		System.out.println("totalCorpusLength: " + totalCorpusLength);
-		System.out.println("averageDocumentLengthInCorpus: " + averageDocumentLengthInCorpus);
+//		for(Map.Entry<String, Integer> entry : totalTermFrequencyInCorpus.entrySet()) {
+//			String key = entry.getKey();
+//			Integer value = entry.getValue();
+//			System.out.println(key + " : " + value);
+//		}
+//
+//		System.out.println("totalDocsInCorpus: " + totalDocsInCorpus);
+//		System.out.println("totalCorpusLength: " + totalCorpusLength);
+//		System.out.println("averageDocumentLengthInCorpus: " + averageDocumentLengthInCorpus);
 
 		// Step 2. calculate the query
 		// ArticleWordsDic → QueryResultWithArticleId

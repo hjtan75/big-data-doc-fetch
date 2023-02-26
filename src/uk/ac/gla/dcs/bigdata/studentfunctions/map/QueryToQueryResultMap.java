@@ -46,7 +46,15 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
             for (String term : query.getQueryTerms()){
                 int currTotalTermFrequencyInCorpus = totalTermFrequencyInCorpusDic.containsKey(term) ? totalTermFrequencyInCorpusDic.get(term) : 0;
                 if (mapping.containsKey(term)){
-                    //System.out.println("termFrequencyInCurrentDocument " + mapping.get(term) + " currTotalTermFrequencyInCorpus: " + currTotalTermFrequencyInCorpus + " currentDocLength: " + articleWordsDic.getLength());
+                    /**
+                     * Calculates the DPH score for a single query term in a document
+                     * @param termFrequencyInCurrentDocument // The number of times the query appears in the document
+                     * @param totalTermFrequencyInCorpus // the number of times the query appears in all documents
+                     * @param currentDocumentLength // the length of the current document (number of terms in the document)
+                     * @param averageDocumentLengthInCorpus // the average length across all documents
+                     * @param totalDocsInCorpus // the number of documents in the corpus
+                     * @return
+                     */
                     currentScore += DPHScorer.getDPHScore(mapping.get(term).shortValue(), currTotalTermFrequencyInCorpus, articleWordsDic.getLength(), averageDocumentLengthInCorpus, totalDocsInCorpus);
                 }
             }
@@ -68,16 +76,23 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
 
         //3. calculate distance and generate inter query
         QueryResultWithArticleId queryResultWithArticleId = new QueryResultWithArticleId(query, new ArrayList<>());
-        List<DPHResult> list = queryResultWithArticleId.getArticleIdList();
-        for (int i = 0; i < dphResultList.size() && list.size() < 10; i++) {
+        List<DPHResult> finalResultList = queryResultWithArticleId.getArticleIdList();
+        for (int i = 0; i < dphResultList.size() && finalResultList.size() < 10; i++) {
             var curr = dphResultList.get(i);
-            if (list.size() == 0){
-                list.add(curr);
+            if (finalResultList.size() == 0){
+                finalResultList.add(curr);
                 continue;
             }
-            double score = TextDistanceCalculator.similarity(list.get(list.size() - 1).getTitle(), curr.getTitle());
-            if (score >= 0.5){
-                list.add(dphResultList.get(i));
+            boolean add = true;
+            for (DPHResult result : finalResultList){
+                double score = TextDistanceCalculator.similarity(result.getTitle(), curr.getTitle());
+                if (score < 0.5){
+                    add = false;
+                    break;
+                }
+            }
+            if (add){
+                finalResultList.add(dphResultList.get(i));
             }
         }
 
