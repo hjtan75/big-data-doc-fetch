@@ -5,7 +5,8 @@ import org.apache.spark.util.AccumulatorV2;
 import java.util.HashMap;
 
 public class TotalQueryWordsAccumulator extends AccumulatorV2<HashMap<String, Integer>, HashMap<String, Integer>> {
-
+	// This class extends accumulator to create accumulator for HashMap
+	// With term as key and frequency as query for all terms in corpus
     private HashMap<String, Integer> hashMap = new HashMap<>();
 
     @Override

@@ -115,15 +115,19 @@ public class AssessedExercise {
 
 		// Step 1. Preprocessing
 		// NewsArticle → ArticleWordsDic
-        // 1.1 Get the query word map and create broadcast
+        // 1.1 Extract unique query terms and broadcast it
         Set<String> queryWordSet = getQueryWordsSet(queries);
         Broadcast<Set<String>> broadcastQueryWords = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryWordSet);
         // 1.2 Change news -> ArticleWordsDic, remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
+        // Three accumulator created. The first one is for total word count in the whole corpus the to calculate the number of documents
+        // The second one is for total document count
+        // The third one a custom HashMap accumulator that act as a bag of word for the entire corpus
 		LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
 		LongAccumulator docCountAccumulator = spark.sparkContext().longAccumulator();
 		TotalQueryWordsAccumulator totalQueryWordsAccumulator = new TotalQueryWordsAccumulator();
 		spark.sparkContext().register(totalQueryWordsAccumulator);
 
+		// Map NewsArticle -> ArticleWordsDic
 		Dataset<ArticleWordsDic> articleWordsDicDataset = news.flatMap(new PreprocessFlatMap(wordCountAccumulator, docCountAccumulator, totalQueryWordsAccumulator, broadcastQueryWords), Encoders.bean(ArticleWordsDic.class));
 
 		// get totalTermFrequencyInCorpus map, totalDocsInCorpus, averageDocumentLengthInCorpus
@@ -180,7 +184,8 @@ public class AssessedExercise {
 		for (DocumentRanking documentRanking : documentRankingList) {
 			System.out.println("Query: " + documentRanking.getQuery().getOriginalQuery());
 			for (RankedResult rankedResult : documentRanking.getResults()) {
-				System.out.println("Document ID: " + rankedResult.getDocid());
+				System.out.println("Document title: " + rankedResult.getArticle().getTitle());
+				System.out.println("Score: " + rankedResult.getScore());
 			}
 			System.out.println("-----------------------------------------------");
 		}
@@ -189,6 +194,10 @@ public class AssessedExercise {
 	}
 
 	private static Set<String> getQueryWordsSet(Dataset<Query> queries){
+		// This function extract query terms from the Query class
+		// Turn it into JavaPairRDD with term as key and frequency as value
+		// Reduce by key to create a bag of words for all of the queries
+		// Return a set that contain the unique terms of all queries
 		Dataset<String> queryWords = queries.flatMap(new QueryWordsFlatMap(), Encoders.STRING());
 		JavaPairRDD<String,Integer> queryPairs = queryWords.toJavaRDD().mapToPair(new PairFunction<String,String,Integer>(){
 			@Override
