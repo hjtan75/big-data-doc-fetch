@@ -17,6 +17,7 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TotalQueryWordsAccumulator;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetReusltArticleIdFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.filter.PreprocessFlatMap;
@@ -176,7 +177,15 @@ public class AssessedExercise {
 		var documentRankingDataset = queryResultWithArticleIdDataset.map(new QueryWithArticleIdToDR(newsArticleMapBroadcast), Encoders.bean(DocumentRanking.class));
 
 		List<DocumentRanking> documentRankingList = documentRankingDataset.collectAsList();
-		return documentRankingList; // replace this with the the list of DocumentRanking output by your topology
+		for (DocumentRanking documentRanking : documentRankingList) {
+			System.out.println("Query: " + documentRanking.getQuery().getOriginalQuery());
+			for (RankedResult rankedResult : documentRanking.getResults()) {
+				System.out.println("Document ID: " + rankedResult.getDocid());
+			}
+			System.out.println("-----------------------------------------------");
+		}
+		
+		return documentRankingList;
 	}
 
 	private static Set<String> getQueryWordsSet(Dataset<Query> queries){
