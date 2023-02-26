@@ -47,7 +47,6 @@ public class PreprocessFlatMap implements FlatMapFunction<NewsArticle, ArticleWo
         }
 
         // Process contentItem that has subtype equals to "paragraph"
-        //
         int number = 0;
         Iterator<ContentItem> iterator = newsArticle.getContents().iterator();
         while(iterator.hasNext() && number < 5){
@@ -63,7 +62,9 @@ public class PreprocessFlatMap implements FlatMapFunction<NewsArticle, ArticleWo
         }
         wordCountAccumulator.add(list.size());
         docCountAccumulator.add(1);
-
+        
+        // Convert list of terms to bag of words
+        // Only consider terms that exist in the query
         Set<String> queryWords = broadcastQueryWords.value();
         ArticleWordsDic articleWordsDic = new ArticleWordsDic(newsArticle.getId(), newsArticle.getTitle(), list.size(), new HashMap<String, Integer>());
         Map<String, Integer> mapping = articleWordsDic.getMap();

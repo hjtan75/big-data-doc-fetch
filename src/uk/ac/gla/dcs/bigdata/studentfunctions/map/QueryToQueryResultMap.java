@@ -39,7 +39,9 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
         List<DPHResult> dphResultList = new ArrayList<>();
 
 
-        //1. get the score of articles
+        //1. Score each article
+        // For each query terms, we'll see whether it exists in the document
+        // If so add the score the that document.
         for (ArticleWordsDic articleWordsDic : articleWordsList){
             double currentScore = 0;
             Map<String, Integer> mapping = articleWordsDic.getMap();
@@ -62,7 +64,8 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
             DPHResult dphScorer = new DPHResult(articleWordsDic.getId(),articleWordsDic.getTitle(), currentScore);
             dphResultList.add(dphScorer);
         }
-        //2. sort by the score
+        
+        //2. Sort article based on DPH score
         Collections.sort(dphResultList, new Comparator<DPHResult>() {
             @Override
             public int compare(DPHResult d1, DPHResult d2) {
@@ -74,7 +77,10 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
         });
 
 
-        //3. calculate distance and generate inter query
+        //3. Create a final list to hold the top ten document
+        // Distance between new document and every documents in the list is calculated
+        // If distance > 0.5 document is added, else document is ignore
+        // Document is added until the final list has size of 10
         QueryResultWithArticleId queryResultWithArticleId = new QueryResultWithArticleId(query, new ArrayList<>());
         List<DPHResult> finalResultList = queryResultWithArticleId.getArticleIdList();
         for (int i = 0; i < dphResultList.size() && finalResultList.size() < 10; i++) {

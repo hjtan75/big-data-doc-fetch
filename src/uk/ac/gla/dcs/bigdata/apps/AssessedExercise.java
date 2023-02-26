@@ -141,17 +141,7 @@ public class AssessedExercise {
 		long totalDocsInCorpus = docCountAccumulator.value();
 		double averageDocumentLengthInCorpus = totalCorpusLength / totalDocsInCorpus;
 		Map<String, Integer> totalTermFrequencyInCorpus = totalQueryWordsAccumulator.value();
-
-//		for(Map.Entry<String, Integer> entry : totalTermFrequencyInCorpus.entrySet()) {
-//			String key = entry.getKey();
-//			Integer value = entry.getValue();
-//			System.out.println(key + " : " + value);
-//		}
-//
-//		System.out.println("totalDocsInCorpus: " + totalDocsInCorpus);
-//		System.out.println("totalCorpusLength: " + totalCorpusLength);
-//		System.out.println("averageDocumentLengthInCorpus: " + averageDocumentLengthInCorpus);
-
+		
 		// Step 2. calculate the query
 		// ArticleWordsDic → QueryResultWithArticleId
 		//  1. Wrap the DPH parameter and the List<ArticleWordsDic> into Broadcast variables.
@@ -173,6 +163,7 @@ public class AssessedExercise {
 
 		// Step 3. Generate DocumentRanking
 		// QueryResultWithArticleId → DocumentRanking
+		// Create a HashMap that maps document's ID to 'NewsArticle'
 		//  1. In `Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset`, there are all the ArticleID needed for the result, then using `GetReusltArticleIdFlatMap()` to generate the unique ArticleID as HashSet,
 		//     use it on `NewsArticleResultFlatMap` of news dataset to get the Dataset<NewsArticle> needed for create DocumentRanking.
 		//  2. After getting Dataset<NewsArticle>, map it to `JavaPairRDD<String, NewsArticle>`, the key is the ArticleId, collect as Map.
@@ -192,6 +183,8 @@ public class AssessedExercise {
 		var documentRankingDataset = queryResultWithArticleIdDataset.map(new QueryWithArticleIdToDR(newsArticleMapBroadcast), Encoders.bean(DocumentRanking.class));
 
 		List<DocumentRanking> documentRankingList = documentRankingDataset.collectAsList();
+		
+		// Print results
 		for (DocumentRanking documentRanking : documentRankingList) {
 			System.out.println("Query: " + documentRanking.getQuery().getOriginalQuery());
 			for (RankedResult rankedResult : documentRanking.getResults()) {
