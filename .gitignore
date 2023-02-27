@@ -5,6 +5,7 @@ bin
 .classpath
 Notes.docx
 .idea/
+BigData-AE.iml
 *.pydevproject
 .project
 .metadata
@@ -17,5 +18,5 @@ results
 *~.nib
 local.properties
 .loadpath
+pom.xml
 .DS_Store
-BigData-AE.iml
