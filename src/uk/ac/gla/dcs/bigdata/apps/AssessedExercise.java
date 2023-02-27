@@ -184,15 +184,15 @@ public class AssessedExercise {
 
 		List<DocumentRanking> documentRankingList = documentRankingDataset.collectAsList();
 		
-		// Print results
-		for (DocumentRanking documentRanking : documentRankingList) {
-			System.out.println("Query: " + documentRanking.getQuery().getOriginalQuery());
-			for (RankedResult rankedResult : documentRanking.getResults()) {
-				System.out.println("Document title: " + rankedResult.getArticle().getTitle());
-				System.out.println("Score: " + rankedResult.getScore());
-			}
-			System.out.println("-----------------------------------------------");
-		}
+//		// Print results
+//		for (DocumentRanking documentRanking : documentRankingList) {
+//			System.out.println("Query: " + documentRanking.getQuery().getOriginalQuery());
+//			for (RankedResult rankedResult : documentRanking.getResults()) {
+//				System.out.println("Document title: " + rankedResult.getArticle().getTitle());
+//				System.out.println("Score: " + rankedResult.getScore());
+//			}
+//			System.out.println("-----------------------------------------------");
+//		}
 		
 		return documentRankingList;
 	}
