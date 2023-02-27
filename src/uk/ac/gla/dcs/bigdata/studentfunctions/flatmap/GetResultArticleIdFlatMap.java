@@ -12,11 +12,11 @@ public class GetResultArticleIdFlatMap implements FlatMapFunction<QueryResultWit
 
 	@Override
 	public Iterator<String> call(QueryResultWithArticleId queryResultWithArticleId) throws Exception {
-		 var list = new ArrayList<String>();
-	        for (DPHResult dphResult : queryResultWithArticleId.getArticleIdList()){
-	            list.add(dphResult.getId());
-	        }
-	        return list.iterator();
-	}
+		var list = new ArrayList<String>();
+			for (DPHResult dphResult : queryResultWithArticleId.getArticleIdList()){
+				list.add(dphResult.getId());
+			}
+		return list.iterator();
+}
 	
 }
