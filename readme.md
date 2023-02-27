@@ -127,3 +127,9 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
 ### FlatMapFunction `NewsArticleResultFlatMap`
 
 ### MapFunction `QueryWithArticleIdToDR`
+
+# Edits 
+1. Renamed flatmap function `GetReusltArticleIdFlatMap` to `GetResultArticleIdFlatMap`, and updated the related classes.
+2. rephrase comments in *AssessedExercise* and *QueryToQueryResultMap* files.
+
+
