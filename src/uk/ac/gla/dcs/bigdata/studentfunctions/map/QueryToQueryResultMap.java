@@ -78,7 +78,7 @@ public class QueryToQueryResultMap implements MapFunction<Query, QueryResultWith
 
 
         //3. Create a final list to hold the top ten document
-        // Distance between new document and every documents in the list is calculated
+        // Distance between new document and every document in the list is calculated
         // If distance > 0.5 document is added, else document is ignore
         // Document is added until the final list has size of 10
         QueryResultWithArticleId queryResultWithArticleId = new QueryResultWithArticleId(query, new ArrayList<>());
