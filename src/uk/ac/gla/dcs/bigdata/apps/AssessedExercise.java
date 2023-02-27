@@ -19,7 +19,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TotalQueryWordsAccumulator;
-import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetReusltArticleIdFlatMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.GetResultArticleIdFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.filter.PreprocessFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.NewsArticleResultFlatMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.flatmap.QueryWordsFlatMap;
@@ -126,7 +126,7 @@ public class AssessedExercise {
         // 1.2 Change news -> ArticleWordsDic, remove stopwords (words with little discriminative value, e.g. ‘the’) and apply stemming
         // Three accumulator created. The first one is for total word count in the whole corpus the to calculate the number of documents
         // The second one is for total document count
-        // The third one a custom HashMap accumulator that act as a bag of word for the entire corpus
+        // The third one is a custom HashMap accumulator that act as a bag of words for the entire corpus
 		LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
 		LongAccumulator docCountAccumulator = spark.sparkContext().longAccumulator();
 		TotalQueryWordsAccumulator totalQueryWordsAccumulator = new TotalQueryWordsAccumulator();
@@ -164,11 +164,11 @@ public class AssessedExercise {
 		// Step 3. Generate DocumentRanking
 		// QueryResultWithArticleId → DocumentRanking
 		// Create a HashMap that maps document's ID to 'NewsArticle'
-		//  1. In `Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset`, there are all the ArticleID needed for the result, then using `GetReusltArticleIdFlatMap()` to generate the unique ArticleID as HashSet,
+		//  1. In `Dataset<QueryResultWithArticleId> queryResultWithArticleIdDataset`, there are all the ArticleID needed for the result, then using `GetResultArticleIdFlatMap()` to generate the unique ArticleID as HashSet,
 		//     use it on `NewsArticleResultFlatMap` of news dataset to get the Dataset<NewsArticle> needed for create DocumentRanking.
 		//  2. After getting Dataset<NewsArticle>, map it to `JavaPairRDD<String, NewsArticle>`, the key is the ArticleId, collect as Map.
 		//  3. Then broadcast it to the previous `queryResultWithArticleIdDataset`, using `QueryWithArticleIdToDR` Map to get the final `List<DocumentRanking> documentRankingList`.
-		Dataset<String> queryResultWithArticleIdList  = queryResultWithArticleIdDataset.flatMap(new GetReusltArticleIdFlatMap(), Encoders.STRING()).distinct();
+		Dataset<String> queryResultWithArticleIdList  = queryResultWithArticleIdDataset.flatMap(new GetResultArticleIdFlatMap(), Encoders.STRING()).distinct();
 		HashSet<String> resultArticleIdSet = new HashSet<>(queryResultWithArticleIdList.collectAsList());
 		Broadcast<HashSet<String>> resultArticleIdSetBroadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(resultArticleIdSet);
 		Dataset<NewsArticle> resultNews = news.flatMap(new NewsArticleResultFlatMap(resultArticleIdSetBroadcast), Encoders.bean(NewsArticle.class));
@@ -200,7 +200,7 @@ public class AssessedExercise {
 	private static Set<String> getQueryWordsSet(Dataset<Query> queries){
 		// This function extract query terms from the Query class
 		// Turn it into JavaPairRDD with term as key and frequency as value
-		// Reduce by key to create a bag of words for all of the queries
+		// Reduce by key to create a bag of words for all the queries
 		// Return a set that contain the unique terms of all queries
 		Dataset<String> queryWords = queries.flatMap(new QueryWordsFlatMap(), Encoders.STRING());
 		JavaPairRDD<String,Integer> queryPairs = queryWords.toJavaRDD().mapToPair(new PairFunction<String,String,Integer>(){

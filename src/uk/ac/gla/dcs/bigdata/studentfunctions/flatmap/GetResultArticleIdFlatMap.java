@@ -7,7 +7,7 @@ import uk.ac.gla.dcs.bigdata.studentstructures.QueryResultWithArticleId;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class GetReusltArticleIdFlatMap implements FlatMapFunction<QueryResultWithArticleId, String> {
+public class GetResultArticleIdFlatMap implements FlatMapFunction<QueryResultWithArticleId, String> {
 
     @Override
     public Iterator<String> call(QueryResultWithArticleId queryResultWithArticleId) throws Exception {
